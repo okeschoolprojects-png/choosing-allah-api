@@ -26,11 +26,23 @@ if preface_page is None:
 
 result = {}
 
-# All anchors (including References and Glossary, now at the back of the book)
-# appear after the preface, in manifest order.
+# The online-resources page (a-refs) sits right after the preface and renders
+# the heading ONLINE RESOURCES, so it is located separately. Every other
+# anchor appears after the preface in manifest order.
 last = preface_page + 1
 for e in MAN:
     if e['anchor'] == 'a-gloss': continue
+    if e['anchor'] == 'a-refs':
+        found = None
+        for i in range(preface_page + 1, len(doc)):
+            pu = pages[i].upper()
+            if 'CONTENTS' in pu[:40]:
+                continue
+            if 'ONLINE RESOURCES' in pu:
+                found = i + 1
+                break
+        result[e['anchor']] = found
+        continue
     needle = norm(display(e['title'])).upper()
     found = None
     for i in range(last, len(doc)):
