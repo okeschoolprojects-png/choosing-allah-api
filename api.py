@@ -1,4 +1,4 @@
-"""Choosing Allah — PDF Build API"""
+"""Choosing Allah PDF Build API"""
 import os, subprocess, threading
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
@@ -41,10 +41,10 @@ CHAPTER_NAMES = {
     "f_15.md": "15 · How to properly seek knowledge",
     "f_16.md": "16 · How to believe what you already know",
     "f_17_final_word.md":    "Your turn",
-    "f_19_refs_page.md":     "References page — printed text",
-    "manifest.json":         "Contents — chapter titles & order",
-    "f_18_references.md":    "References (online list — not printed)",
-    "glossary.md":           "Glossary (term definitions — not printed)",
+    "f_19_refs_page.md":     "Online resources page (printed text)",
+    "manifest.json":         "Contents (chapter titles and order)",
+    "f_18_references.md":    "References (online list, not printed)",
+    "glossary.md":           "Glossary (term definitions, not printed)",
 }
 
 ORDER = list(CHAPTER_NAMES.keys())
@@ -126,7 +126,7 @@ def build_pdf():
 @app.get("/pdf")
 def download_pdf():
     if not PDF.exists():
-        raise HTTPException(404, "No PDF yet — POST /build first")
+        raise HTTPException(404, "No PDF yet. POST /build first.")
     return FileResponse(str(PDF), media_type="application/pdf", filename="interior.pdf")
 
 
