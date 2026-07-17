@@ -76,7 +76,7 @@ def list_chapters():
 @app.get("/chapter/{filename}")
 def get_chapter(filename: str):
     path = SRC / filename
-    if not path.exists():
+    if not path.exists() and filename != "f_cover_url.md":
         raise HTTPException(404, f"{filename} not found")
     return {
         "file": filename,
@@ -88,7 +88,7 @@ def get_chapter(filename: str):
 @app.put("/chapter/{filename}")
 def update_chapter(filename: str, body: ChapterBody):
     path = SRC / filename
-    if not path.exists():
+    if not path.exists() and filename != "f_cover_url.md":
         raise HTTPException(404, f"{filename} not found")
     path.write_text(body.content, encoding="utf-8")
     return {"ok": True, "file": filename}
