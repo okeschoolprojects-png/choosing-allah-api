@@ -320,7 +320,12 @@ def build_html(page_map=None):
     cover_url_file = D + 'f_cover_url.md'
     cover_page = ''
     if os.path.exists(cover_url_file):
-        cu = open(cover_url_file, encoding='utf-8').read().strip()
+        _raw = open(cover_url_file, encoding='utf-8').read().strip()
+        try:
+            import json as _json
+            cu = _json.loads(_raw).get('content', '') if _raw.startswith('{') else _raw
+        except Exception:
+            cu = _raw
         if cu:
             # Download and embed as base64 so WeasyPrint never needs to
             # fetch an external URL (it often refuses to for security reasons).
