@@ -322,7 +322,20 @@ def build_html(page_map=None):
     if os.path.exists(cover_url_file):
         cu = open(cover_url_file, encoding='utf-8').read().strip()
         if cu:
-            cover_page = '<div class="pg-cover"><img src="%s" alt="Front cover"></div>' % cu
+            # Download and embed as base64 so WeasyPrint never needs to
+            # fetch an external URL (it often refuses to for security reasons).
+            try:
+                import urllib.request, base64 as _b64
+                req = urllib.request.Request(cu, headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req, timeout=20) as resp:
+                    img_bytes = resp.read()
+                    ct = resp.headers.get_content_type() or 'image/jpeg'
+                b64str = _b64.b64encode(img_bytes).decode('ascii')
+                cover_page = ('<div class="pg-cover">'
+                              '<img src="data:%s;base64,%s" alt="Front cover">'
+                              '</div>') % (ct, b64str)
+            except Exception as _e:
+                print('Cover image download failed, skipping cover page:', _e)
 
     h = '<!DOCTYPE html><html lang="en" dir="ltr"><head><meta charset="UTF-8"><style>' + CSS + '</style></head><body>'
     h += cover_page
