@@ -141,8 +141,11 @@ def toc_case(title):
 def build_toc_html(page_map):
     rows = []
     for e in MANIFEST:
+        if e['anchor'] == 'a-gloss': continue  # consolidated into single menu page
         num = page_map.get(e['anchor'],'') if page_map else ''
-        rows.append('<div class="toc-row"><span class="toc-title">%s</span><span class="toc-dots"></span><span class="toc-num">%s</span></div>' % (toc_case(e['title']), num if num else ''))
+        # Rename the back-matter entry in the TOC to reflect the consolidated page
+        title = 'choosingallah.com' if e['anchor'] == 'a-refs' else toc_case(e['title'])
+        rows.append('<div class="toc-row"><span class="toc-title">%s</span><span class="toc-dots"></span><span class="toc-num">%s</span></div>' % (title, num if num else ''))
     return '<section class="chapter toc"><h1 class="chap nonum">Contents</h1><div class="toc-body">' + '\n'.join(rows) + '</div></section>'
 
 def front_matter():
@@ -303,9 +306,9 @@ def build_html(page_map=None):
     back_body = ''
     for e in MANIFEST:
         if e['anchor'] == 'a-refs':
-            back_body += references_section(e['anchor'])
+            back_body += menu_section(e['anchor'])
         elif e['anchor'] == 'a-gloss':
-            back_body += glossary_section(e['anchor'])
+            pass  # consolidated into single choosingallah.com/menu page above
     preface_html = parse(load('f_00_preface_clean.md'), 'Before we begin')
     preface_html = preface_html.replace('<section class="chapter">', '<section class="chapter preface">', 1)
     body = ''
