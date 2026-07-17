@@ -151,10 +151,30 @@ def front_matter():
     def grab(label):
         m = re.search(r'\*\*' + label + r':?\*\*:?\s*(.*?)(?=\n\s*\*\*|\Z)', t, re.S)
         return ' '.join(m.group(1).split()) if m else None
-    ded = 'I don’t know your name.<br>But I thought about you on every single page.'
+    # Pull every field from the file. The file may or may not have
+    # **Label:** prefixes — handle both layouts.
     cop = grab('Copyright page') or ''
+
+    # Dedication: try the label first; if absent, use everything before
+    # the first **-prefixed label (or before copyright) as the dedication.
+    ded_raw = grab('Dedication')
+    if not ded_raw:
+        # No label — the whole file (minus copyright block) is the dedication.
+        ded_raw = re.sub(r'\*\*[^*]+\*\*:?.*', '', t, flags=re.S).strip()
+    ded = norm_quotes(ded_raw) if ded_raw else 'I don’t know your name.<br>But I thought about you on every single page.'
+
+    # Epigraph: try the label first; fall back to hardcoded original.
     eq = '“Did He not find you unaware of the right path, and then guided you?”'
     esrc = 'Surah Ad-Duha, aya 7'
+    epi_raw = grab('Epigraph')
+    if epi_raw:
+        if '—' in epi_raw:
+            eq, esrc = [s.strip() for s in epi_raw.rsplit('—', 1)]
+        elif '–' in epi_raw:
+            eq, esrc = [s.strip() for s in epi_raw.rsplit('–', 1)]
+        else:
+            eq = epi_raw.strip()
+        eq = norm_quotes(eq)
     cop = re.sub(r'\s*\(placeholder[^)]*\)', '', cop)
     cop_lines = [s.strip() for s in re.split(r'(?<=[.\]])\s+(?=[A-Z])', cop) if s.strip()]
     return ded, eq, esrc, cop_lines
