@@ -182,6 +182,28 @@ def front_matter():
     cop_lines = [s.strip() for s in re.split(r'(?<=[.\]])\s+(?=[A-Z])', cop) if s.strip()]
     return ded, eq, esrc, cop_lines
 
+def menu_section(anchor):
+    url = 'https://choosingallah.com'
+    # Fetch QR for homepage; fall back to local qr_refs.png
+    qr_tag = '<img class="qr-img" src="qr_refs.png">'
+    try:
+        import urllib.request, base64
+        qr_url = 'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=' + url
+        with urllib.request.urlopen(qr_url, timeout=8) as r:
+            b64 = base64.b64encode(r.read()).decode()
+        qr_tag = '<img class="qr-img" src="data:image/png;base64,%s">' % b64
+    except Exception:
+        pass
+    note = ('The references, glossary, and recitations for this book are all online at choosingallah.com. '
+            'Every numbered source is documented and linked. Every Arabic term is defined. '
+            'Every Qur\u2019an passage quoted in the book is there in audio. '
+            'Free to access. Scan the code below.')
+    return ('<a id="%s"></a><section class="chapter">'
+            '<h1 class="chap nonum">choosingallah.com</h1>'
+            '<p class="qr-note">%s</p>'
+            '%s'
+            '<p class="qr-url">%s</p></section>') % (anchor, note, qr_tag, url)
+
 def references_section(anchor):
     url = 'https://choosingallah.com/references'
     note = ('When a fact, a study, or a figure came up in these pages, it carried a small number. Every '
