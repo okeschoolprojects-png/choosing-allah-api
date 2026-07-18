@@ -122,10 +122,16 @@ def parse(md, chapter_title, anchor_id=None, footnotes=True):
         if not el.startswith('<h2>'): break
     eyebrow, display = split_title(chapter_title)
     anchor = '<a id="%s"></a>' % anchor_id if anchor_id else ''
+    # Invisible page marker inside the section. find_pages locates each
+    # chapter by this exact token; matching rendered title text is fragile
+    # (titles can recur in body text or change), which caused MISSING-anchor
+    # build failures. Must sit inside the section: content before a
+    # page-break-before section lands on the previous page.
+    marker = '<span class="pgmark">[[PG:%s]]</span>' % anchor_id if anchor_id else ''
     if eyebrow:
-        head = '%s<section class="chapter"><div class="eyebrow">%s</div><h1 class="chap">%s</h1>' % (anchor, eyebrow, display)
+        head = '%s<section class="chapter">%s<div class="eyebrow">%s</div><h1 class="chap">%s</h1>' % (anchor, marker, eyebrow, display)
     else:
-        head = '%s<section class="chapter"><h1 class="chap nonum">%s</h1>' % (anchor, display)
+        head = '%s<section class="chapter">%s<h1 class="chap nonum">%s</h1>' % (anchor, marker, display)
     return head + '\n'.join(body) + '</section>'
 
 MANIFEST = json.load(open(D + 'manifest.json', encoding='utf-8'))
@@ -195,10 +201,14 @@ def menu_section(anchor):
         pass
     # No text on this page by design. Everything it needs to say lives in the
     # preface. Just the heading with the QR code sitting a little below it.
-    return ('<a id="%s"></a><section class="chapter" style="height:6.8in;">'
+    # No fixed height here: the heading's top margin collapses through a
+    # block section, so height:6.8in overflowed the 6.85in page area and
+    # spilled an empty tail onto the next page as a blank page.
+    return ('<a id="%s"></a><section class="chapter">'
+            '<span class="pgmark">[[PG:%s]]</span>'
             '<h1 class="chap nonum">Online resources</h1>'
             '<div style="display:flex; justify-content:center; margin-top:0.25in;">%s</div>'
-            '</section>') % (anchor, qr_tag)
+            '</section>') % (anchor, anchor, qr_tag)
 
 CSS = (
     '@page { size: 5.5in 8.5in; margin: 0.8in 0.5in 0.85in 0.65in; }\n'
@@ -231,6 +241,9 @@ CSS = (
     '.ded-line:first-child { padding-top:0; }\n'
     # Chapters
     '.chapter { page-break-before:always; }\n'
+    # White (not transparent: Chromium drops transparent text from the PDF
+    # text layer entirely) and 1px, so it is extractable but never visible.
+    '.pgmark { color:#ffffff; font-size:1px; line-height:0; }\n'
     'h1.chap { text-align:center; font-size:16.5pt; font-weight:400; letter-spacing:3px;'
     '          text-transform:uppercase; margin:0 0 0.42in 0; color:#111; }\n'
     'h1.chap.nonum { margin-top:0.55in; }\n'
@@ -349,6 +362,12 @@ if __name__ == '__main__':
     html = build_html(page_map)
     with open('./interior.html', 'w', encoding='utf-8') as f:
         f.write(html)
+    # Guard against silent truncation (e.g. disk full on the server): a
+    # partial interior.html renders a partial PDF and the build fails later
+    # with confusing MISSING-anchor errors.
+    written = open('./interior.html', encoding='utf-8').read()
+    if len(written) != len(html) or not written.rstrip().endswith('</html>'):
+        raise SystemExit('interior.html is truncated (disk full?): wrote %d of %d chars' % (len(written), len(html)))
     fns = {str(g['num']): {'term': g['term'], 'defn': g['defn']} for g in GLOSSARY if g['done']}
     with open('./footnotes.json', 'w', encoding='utf-8') as f:
         json.dump(fns, f, ensure_ascii=False)
