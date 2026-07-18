@@ -41,7 +41,6 @@ CHAPTER_NAMES = {
     "f_15.md": "15 · How to properly seek knowledge",
     "f_16.md": "16 · How to believe what you already know",
     "f_17_final_word.md":    "Your turn",
-    "f_19_refs_page.md":     "Online resources page (printed text)",
     "manifest.json":         "Contents (chapter titles and order)",
     "f_18_references.md":    "References (online list, not printed)",
     "glossary.md":           "Glossary (term definitions, not printed)",
