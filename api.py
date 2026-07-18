@@ -1,7 +1,7 @@
 """Choosing Allah PDF Build API"""
 import os, subprocess, threading
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -17,6 +17,22 @@ app.add_middleware(
 BASE = Path(__file__).parent
 SRC  = BASE / "src16"
 PDF  = BASE / "interior.pdf"
+
+# Write access is guarded by a shared secret when CHAPTERS_API_TOKEN is set
+# in the environment. The Lovable server functions already send it as the
+# X-API-Token header. Without the env var, behavior is unchanged (open).
+API_TOKEN = os.environ.get("CHAPTERS_API_TOKEN", "")
+
+
+def _check_token(x_api_token: str | None):
+    if API_TOKEN and x_api_token != API_TOKEN:
+        raise HTTPException(401, "Invalid or missing X-API-Token")
+
+
+def _safe_path(filename: str) -> Path:
+    if "/" in filename or "\\" in filename or ".." in filename:
+        raise HTTPException(400, "Invalid filename")
+    return SRC / filename
 
 _build_lock = threading.Lock()
 
@@ -74,7 +90,7 @@ def list_chapters():
 
 @app.get("/chapter/{filename}")
 def get_chapter(filename: str):
-    path = SRC / filename
+    path = _safe_path(filename)
     if not path.exists() and filename != "f_cover_url.md":
         raise HTTPException(404, f"{filename} not found")
     return {
@@ -85,8 +101,9 @@ def get_chapter(filename: str):
 
 
 @app.put("/chapter/{filename}")
-def update_chapter(filename: str, body: ChapterBody):
-    path = SRC / filename
+def update_chapter(filename: str, body: ChapterBody, x_api_token: str | None = Header(default=None)):
+    _check_token(x_api_token)
+    path = _safe_path(filename)
     if not path.exists() and filename != "f_cover_url.md":
         raise HTTPException(404, f"{filename} not found")
     path.write_text(body.content, encoding="utf-8")
@@ -94,7 +111,8 @@ def update_chapter(filename: str, body: ChapterBody):
 
 
 @app.post("/build")
-def build_pdf():
+def build_pdf(x_api_token: str | None = Header(default=None)):
+    _check_token(x_api_token)
     if not _build_lock.acquire(blocking=False):
         raise HTTPException(503, "A build is already in progress. Try again in a moment.")
     try:
