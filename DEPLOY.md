@@ -72,11 +72,18 @@ The POST /build call takes ~60–90 seconds (full Chromium render). Show a loadi
 
 ## Updating book content
 
-To update a chapter permanently on the server:
-1. Edit the file in `src16/` locally
-2. Commit + push to GitHub → Railway/Render auto-redeploys
+There are two writable copies of every chapter: the markdown in `src16/` (put on the server disk by a deploy, reset on every redeploy) and the revision history the editor keeps in Supabase. They are reconciled automatically:
 
-Or just call `PUT /chapter/{file}` from Lovable (changes persist until next deploy).
+1. **Edit in the editor (normal path).** Save writes to the API *and* records a revision in Supabase. Revisions survive redeploys; the editor and the PDF build re-apply them.
+2. **Edit in GitHub → push → auto-redeploy.** The next time the editor loads (or a PDF is built), content the editor has never seen is detected and adopted as the newest revision, so an older editor save cannot shadow or overwrite it. The editor shows an "Updated from repo" notice when this happens.
+
+If both sides were edited, the repo version wins and the editor version stays one step back in the chapter's History dialog, so nothing is lost.
+
+---
+
+## Environment variables
+
+- `CHAPTERS_API_TOKEN` — set the same value on this API service (Render/Railway) and in the Lovable project. When set on the API, `PUT /chapter/{file}` and `POST /build` require the matching `X-API-Token` header. Without it, anyone who finds the API URL can overwrite chapters.
 
 ---
 
