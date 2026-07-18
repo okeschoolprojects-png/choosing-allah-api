@@ -127,7 +127,12 @@ def build_pdf(x_api_token: str | None = Header(default=None)):
         ])
         r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=300)
         if r.returncode != 0:
-            raise HTTPException(500, f"Build failed:\n{r.stderr[-3000:]}")
+            # Include the stdout tail too: the build scripts print the page
+            # map and totals there, which is what you need to diagnose
+            # anchor/pagination failures.
+            err = (r.stderr or "").strip()[-2000:]
+            log = (r.stdout or "").strip()[-1000:]
+            raise HTTPException(500, f"Build failed:\n{err}\n--- build log tail ---\n{log}")
         if not PDF.exists():
             raise HTTPException(500, "Build succeeded but PDF not found")
         return FileResponse(
