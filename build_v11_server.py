@@ -101,10 +101,11 @@ def parse(md, chapter_title, anchor_id=None, footnotes=True):
             body.append('<h2>%s</h2>' % l[3:].strip()); continue
         if raw.startswith('> '):
             body.append('<p class="bq">%s</p>' % l[2:].strip()); continue
-        # Verse detection sees through *emphasis* wrapping: strip any em tags
-        # first, so the whole paragraph (reference included) is italicized by
-        # the trans class instead of ending up half italic, half roman.
-        bare = re.sub(r'</?em>', '', l)
+        # Verse detection sees through *emphasis* wrapping. Asterisks are only
+        # converted to <em> later (in inline()), so strip literal asterisks and
+        # any em tags here; the trans class then italicizes the whole paragraph,
+        # reference included, instead of leaving it half italic, half roman.
+        bare = re.sub(r'</?em>', '', l).replace('*', '')
         if bare.startswith('\u201c') and ('Surah' in raw or 'surah' in raw or re.search(r'\b[Aa]yas? \d', raw)):
             body.append('<p class="trans">%s</p>' % bare); continue
         body.append('<p>%s</p>' % l)
@@ -198,10 +199,10 @@ def menu_section(anchor):
     except Exception:
         pass
     # No text on this page by design. Everything it needs to say lives in the
-    # preface. Just the heading and the QR code, centered on the page.
-    return ('<a id="%s"></a><section class="chapter" style="height:6.8in; display:flex; flex-direction:column;">'
+    # preface. Just the heading with the QR code right below it, centered.
+    return ('<a id="%s"></a><section class="chapter">'
             '<h1 class="chap nonum">Online resources</h1>'
-            '<div style="flex:1; display:flex; align-items:center; justify-content:center;">%s</div>'
+            '%s'
             '</section>') % (anchor, qr_tag)
 
 CSS = (
