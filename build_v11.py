@@ -247,7 +247,7 @@ CSS = (
     'h2 { font-size:11pt; font-weight:bold; margin:0.158in 0 0.09in 0; page-break-after:avoid; }\n'
     '.bq { font-style:italic; margin:0 0 0.13in 0; }\n'
     '.trans { font-style:italic; margin:0 0 0.13in 0; }\n'
-    '.break { text-align:center; margin:0.02in 0 0.13in 0; }\n'
+    '.break { text-align:center; margin:0.02in 0 0.05in 0; }\n'
     'ul { margin:0 0 0.13in 0.3in; padding:0; }\n'
     'li { margin:0 0 0.05in 0; }\n'
     'sup.fn { font-size:7.5pt; vertical-align:baseline; position:relative; top:-0.5em; line-height:0; }\n'
